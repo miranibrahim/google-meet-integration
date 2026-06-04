@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meet Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0f14; --surface: #161a24; --border: #252b3b;
+      --accent: #00c896; --accent-dim: rgba(0,200,150,0.12);
+      --text: #e8eaf0; --muted: #6b7280; --danger: #f87171;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: "DM Sans", sans-serif;
+      min-height: 100vh; display: flex;
+      align-items: center; justify-content: center; padding: 2rem;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 20% 80%, rgba(0,200,150,0.07) 0%, transparent 60%),
+                  radial-gradient(ellipse 50% 40% at 80% 20%, rgba(66,133,244,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 3rem 2.5rem;
+      width: 100%; max-width: 460px; text-align: center;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    }
+    .logo {
+      width: 56px; height: 56px; margin: 0 auto 1.5rem;
+      background: var(--accent-dim); border: 1px solid rgba(0,200,150,0.3);
+      border-radius: 16px; display: flex; align-items: center;
+      justify-content: center; font-size: 1.6rem;
+    }
+    h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 2.5rem; }
+
+    .btn-primary {
+      display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+      width: 100%; padding: 0.9rem 1.5rem; border-radius: 12px;
+      background: var(--accent); color: #0d1a14; font-weight: 600;
+      font-size: 1rem; font-family: "DM Sans", sans-serif;
+      border: none; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-primary:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,200,150,0.3); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(0,0,0,0.2); border-top-color: #0d1a14;
+      border-radius: 50%; animation: spin 0.7s linear infinite; display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #result-box {
+      display: none; margin-top: 1.25rem;
+      background: var(--accent-dim); border: 1px solid rgba(0,200,150,0.25);
+      border-radius: 14px; padding: 1.25rem; text-align: left;
+      animation: fadeUp 0.4s ease;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    .result-label {
+      font-family: "Space Mono", monospace; font-size: 0.65rem;
+      color: var(--accent); text-transform: uppercase;
+      letter-spacing: 0.12em; margin-bottom: 0.5rem;
+    }
+    #meet-link-text {
+      font-family: "Space Mono", monospace; font-size: 0.8rem;
+      color: var(--text); word-break: break-all; line-height: 1.6;
+    }
+    .copy-row { display: flex; gap: 0.5rem; margin-top: 1rem; }
+    .btn-copy {
+      flex: 1; padding: 0.6rem; font-size: 0.85rem; border-radius: 8px;
+      background: rgba(255,255,255,0.06); color: var(--text);
+      border: 1px solid var(--border); cursor: pointer;
+      font-family: "DM Sans", sans-serif; transition: all 0.2s;
+    }
+    .btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-join {
+      flex: 1; padding: 0.6rem; font-size: 0.85rem; font-weight: 600;
+      border-radius: 8px; background: var(--accent); color: #0d1a14;
+      border: none; cursor: pointer; font-family: "DM Sans", sans-serif;
+      text-decoration: none; display: flex; align-items: center;
+      justify-content: center; gap: 0.4rem; transition: all 0.2s;
+    }
+    .btn-join:hover { filter: brightness(1.1); }
+
+    #error-msg {
+      display: none; margin-top: 1rem;
+      background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+      color: var(--danger); border-radius: 10px;
+      padding: 0.85rem 1rem; font-size: 0.85rem; text-align: left;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.75rem; color: var(--muted); margin-top: 2rem;
+    }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent); animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">📹</div>
+    <h1>Meet Generator</h1>
+    <p class="subtitle">Generate a Google Meet link instantly.<br/>No sign-in required.</p>
+
+    <button class="btn-primary" id="generate-btn" onclick="generateMeet()">
+      <span class="spinner" id="spinner"></span>
+      <span id="btn-label">🎬 Generate Meet Link</span>
+    </button>
+
+    <div id="error-msg"></div>
+
+    <div id="result-box">
+      <div class="result-label">✦ Meet Link Ready</div>
+      <div id="meet-link-text"></div>
+      <div class="copy-row">
+        <button class="btn-copy" onclick="copyLink()">📋 Copy</button>
+        <a id="join-btn" class="btn-join" href="#" target="_blank" rel="noopener">Join Now →</a>
+      </div>
+    </div>
+
+    <div class="badge"><span class="dot"></span> Powered by Google Calendar API</div>
+  </div>
+
+  <script>
+    let currentLink = "";
+
+    async function generateMeet() {
+      const btn = document.getElementById("generate-btn");
+      const spinner = document.getElementById("spinner");
+      const label = document.getElementById("btn-label");
+      const error = document.getElementById("error-msg");
+      const result = document.getElementById("result-box");
+
+      btn.disabled = true;
+      spinner.style.display = "block";
+      label.textContent = "Creating…";
+      error.style.display = "none";
+      result.style.display = "none";
+
+      try {
+        const res = await fetch("/api/create-meet", { method: "POST" });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || "Failed");
+
+        currentLink = data.meetLink;
+        document.getElementById("meet-link-text").textContent = data.meetLink;
+        document.getElementById("join-btn").href = data.meetLink;
+        result.style.display = "block";
+      } catch (err) {
+        error.textContent = "⚠ " + err.message;
+        error.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = "none";
+        label.textContent = "🎬 Generate Meet Link";
+      }
+    }
+
+    function copyLink() {
+      if (!currentLink) return;
+      navigator.clipboard.writeText(currentLink).then(() => {
+        const btn = document.querySelector(".btn-copy");
+        btn.textContent = "✓ Copied!";
+        setTimeout(() => btn.textContent = "📋 Copy", 2000);
+      });
+    }
+  </script>
+</body>
+</html>
